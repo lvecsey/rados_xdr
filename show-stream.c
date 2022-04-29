@@ -11,6 +11,8 @@
 
 #include <errno.h>
 
+#define emit_trouble(x) printf("%s",x);
+
 int writeit(char *handle, char *buf, int len) {
 
   printf("Writing %d bytes.\n", len);
@@ -30,12 +32,8 @@ int readit(char *handle, char *buf, int len) {
   pfd = (int *) handle;
 
   bytes_read = read(pfd[0], buf, len);
-  if (bytes_read != len) {
-    perror("read");
-    return -1;
-  }
   
-  return len;
+  return bytes_read;
   
 }
 
@@ -73,11 +71,19 @@ int main(int argc, char *argv[]) {
 
   xdrs[0].x_op = XDR_DECODE;  
 
-  xdrrec_skiprecord(xdrs + 0);
+  retval = xdrrec_skiprecord(xdrs + 0);
+  if (retval != 1) {
+    emit_trouble("xdrrec_skiprecord");
+    return -1;
+  }
 
   printf("Reading vector of XDR records.\n");
   
-  xdr_vector(xdrs + 0, (char*) board, 64, sizeof(unsigned long), (void*) xdr_u_long);
+  retval = xdr_vector(xdrs + 0, (char*) board, 64, sizeof(unsigned long), (void*) xdr_u_long);
+  if (retval != 1) {
+    emit_trouble("xdr_vector");
+    return -1;
+  }
 
   printf("Values ");
   

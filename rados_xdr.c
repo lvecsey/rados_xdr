@@ -21,6 +21,8 @@ typedef struct {
   
 } handle_pack;
 
+#define emit_trouble(x) printf("%s",x);
+
 int readit(char *handle, char *buf, int len) {
 
   printf("Reading %d bytes.\n", len);
@@ -194,11 +196,23 @@ int main(int argc, char *argv[]) {
 
   xdrs[1].x_op = XDR_ENCODE;
 
-  xdrrec_skiprecord(xdrs + 1);  
+  retval = xdrrec_skiprecord(xdrs + 1);
+  if (retval != 1) {
+    emit_trouble("xdrrec_skiprecord");
+    return -1;
+  }
   
-  xdr_vector(xdrs + 1, (char*) board, 64, sizeof(unsigned long), (void*) xdr_u_long);
+  retval = xdr_vector(xdrs + 1, (char*) board, 64, sizeof(unsigned long), (void*) xdr_u_long);
+  if (retval != 1) {
+    emit_trouble("xdr_vector");
+    return -1;
+  }
 
-  xdrrec_endofrecord(xdrs + 1, 1);
+  retval = xdrrec_endofrecord(xdrs + 1, 1);
+  if (retval != 1) {
+    emit_trouble("xdrrec_endofrecord");
+    return -1;
+  }
 
   retval = rados_aio_flush(hp.ioctx);
   if (retval == -1) {
